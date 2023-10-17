@@ -112,9 +112,9 @@ Temporal evolution of the median annual energy and the median annual danceabilit
 ```{r}
 #| echo: false
 #| message: false
-ggplot(table_dnce_nrgy) +
-  geom_line(aes(x = year, y = nrgy_m, color = "darkgreen")) +
-  geom_line(aes(x = year, y = dnce_m, color = "darkred")) +
+ggplot(table_dnce_nrgy, aes(x = year, y = nrgy_m, color = "darkgreen")) +
+  geom_line() +
+  geom_line(mapping = aes(y = dnce_m, color = "darkred")) +
   ylab("energy and danceability medians") +
   theme(legend.position = "none")
 ```
