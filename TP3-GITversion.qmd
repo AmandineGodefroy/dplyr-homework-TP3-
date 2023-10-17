@@ -1,0 +1,172 @@
+---
+title: "TP3-GITversion"
+author: "Amandine Godefroy"
+format: html
+---
+
+```{r}
+#| echo: false
+#| message: false
+library(here)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+here::i_am("homework-TP3.Rproj")
+spotify <- readRDS("top-spotify-songs-from-20102019-by-year.Rds")
+dropout <- readRDS("dropout.Rds")
+```
+
+# Exercise 1
+
+## Question 1
+
+```{r}
+#| echo: false
+#| message: false
+n_songs <- (spotify %>% distinct(title))
+n_artists <- (spotify %>% distinct(artist))
+n_genre <- (spotify %>% distinct(`top genre`))
+```
+
+The data set contains `r nrow(n_songs)` songs. The data set contains `r nrow(n_artists)` artists. The data set contains `r nrow(n_genre)` genre.
+
+## Question 2
+Number of songs per year.
+```{r}
+#| echo: false
+#| message: false
+songs_per_year <- spotify %>% distinct(title, year)
+t_songs_by_year <- table(songs_per_year[2])
+knitr::kable(t_songs_by_year)
+```
+
+## Question 3
+
+```{r}
+#| echo: false
+#| message: false
+songs_per_artist <- spotify %>% distinct(title, artist)
+
+songs_per_artist |>
+  count(artist) |>
+  slice_max(n)
+```
+
+```{r}
+#| echo: false
+#| message: false
+top_artist <- songs_per_artist |>
+  count(artist) |>
+  slice_max(n) |>
+  pull(artist)
+
+n_top_artist <- songs_per_artist |>
+  count(artist) |>
+  slice_max(n) |>
+  pull(n)
+```
+
+The most popular artist is `r top_artist` with `r n_top_artist` songs.
+
+## Question 4
+Minimum, maximum, mean and median bpm for each musical genre (plus the number of songs).
+```{r}
+#| echo: false
+#| message: false
+n_bpm <- spotify %>% distinct(bpm, artist, `top genre`)
+
+n_bpm %>%
+  group_by(`top genre`) %>%
+  summarise(median(bpm), mean(bpm), max(bpm), min(bpm))
+
+n_bpm %>%
+  group_by(`top genre`) %>%
+  summarise(N = n(), groups = "song")
+```
+```{r}
+#| echo: false
+#| message: false
+table_result <- n_bpm %>%
+  group_by(`top genre`) %>%
+  summarise(median(bpm), mean(bpm), max(bpm), min(bpm), Number_of_songs = n(), groups = "song")
+
+knitr::kable(table_result)
+```
+
+## Question 5
+Median energy and median danceability.
+```{r}
+#| echo: false
+#| message: false
+n_nrgy_dnce_y <- (spotify %>% distinct(year, nrgy, dnce))
+
+table_dnce_nrgy <- n_nrgy_dnce_y %>%
+  group_by(year) %>%
+  summarise(nrgy_m = median(nrgy), dnce_m = median(dnce))
+
+knitr::kable(table_dnce_nrgy)
+```
+
+## Question 6
+Temporal evolution of the median annual energy and the median annual danceability.
+```{r}
+#| echo: false
+#| message: false
+ggplot(table_dnce_nrgy) +
+  geom_line(aes(x = year, y = nrgy_m, color = "darkgreen")) +
+  geom_line(aes(x = year, y = dnce_m, color = "darkred")) +
+  ylab("energy and danceability medians") +
+  theme(legend.position = "none")
+```
+In green we observe the temporal evolution of the median annual energy and in red the median annual danceability.
+
+# Exercice 2
+
+## Question 1
+Median “Age at enrollment” conditioned both on the Gender and on the “Marital status”.
+```{r}
+#| echo: false
+#| message: false
+median_of_age <- dropout %>%
+  group_by(`Marital status`, Gender) %>%
+  summarise(nb = n(), age_median = median(`Age at enrollment`))
+
+knitr::kable(median_of_age)
+```
+
+## Question 2
+
+```{r}
+#| echo: false
+#| message: false
+median_of_age2 <- median_of_age %>% pivot_wider(values_from = age_median, names_from = Gender)
+
+knitr::kable(median_of_age2)
+```
+
+## Question 3
+Conditional mean of all variables related to “Curricular units” given the value of the Target variable.
+```{r}
+#| echo: false
+#| message: false
+curricular_units <- dropout %>% select(Target, `Curricular units 1st sem (credited)`, `Curricular units 1st sem (enrolled)`, `Curricular units 1st sem (evaluations)`, `Curricular units 1st sem (grade)`, `Curricular units 1st sem (without evaluations)`, `Curricular units 2nd sem (credited)`, `Curricular units 2nd sem (enrolled)`, `Curricular units 2nd sem (evaluations)`, `Curricular units 2nd sem (grade)`, `Curricular units 2nd sem (without evaluations)`)
+
+curricular_units_moy <- curricular_units %>%
+  group_by(Target) %>%
+  summarise(across(where(is.numeric), mean))
+
+knitr::kable(curricular_units_moy)
+
+```
+
+## Question 4
+
+```{r}
+#| echo: false
+#| message: false
+curricular_units_moy2 <- curricular_units_moy %>%
+  pivot_longer(starts_with("Curricular unit"), names_to = "Units") %>%
+  pivot_wider(names_from = Target)
+
+knitr::kable(curricular_units_moy2)
+```
