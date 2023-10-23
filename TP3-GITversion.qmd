@@ -7,6 +7,7 @@ format: html
 ```{r}
 #| echo: false
 #| message: false
+#| warning: false
 library(here)
 library(ggplot2)
 library(dplyr)
